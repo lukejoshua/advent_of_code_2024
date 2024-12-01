@@ -18,7 +18,14 @@ pub fn main() !void {
     {
         const file = try std.fs.cwd().openFile("data/day1.txt", .{ .mode = .read_only });
         defer file.close();
-        const answer = try day1.solution(allocator, file.reader());
-        std.debug.print("day 1 part 1: {d}", .{answer});
+        const answer = try day1.part1(allocator, file.reader());
+        std.debug.print("day 1 part 1: {d}\n", .{answer});
+    }
+
+    {
+        const file = try std.fs.cwd().openFile("data/day1.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day1.part2(allocator, file.reader());
+        std.debug.print("day 1 part 2: {d}\n", .{answer});
     }
 }
