@@ -35,4 +35,10 @@ pub fn main() !void {
         const answer = try day2.part1(allocator, file.reader());
         std.debug.print("day 2 part 1: {d}\n", .{answer});
     }
+    {
+        const file = try std.fs.cwd().openFile("data/day2.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day2.part2(allocator, file.reader());
+        std.debug.print("day 2 part 2: {d}\n", .{answer});
+    }
 }

@@ -10,30 +10,10 @@ pub fn part1(allocator: mem.Allocator, file_reader: anytype) !u64 {
 
     var count: u64 = 0;
 
-    outer: for (input.reports) |report| {
-        var sign: i32 = undefined;
-
-        for (report, 0..) |level, index| {
-            if (index == 0) continue;
-
-            const previous_level = report[index - 1];
-            const step = previous_level - level;
-            const difference = @abs(step);
-
-            if (difference < 1 or difference > 3) {
-                continue :outer;
-            }
-
-            if (index == 1) {
-                sign = std.math.sign(step);
-            } else {
-                if (sign != std.math.sign(step)) {
-                    continue :outer;
-                }
-            }
+    for (input.reports) |report| {
+        if (is_safe(report)) {
+            count += 1;
         }
-
-        count += 1;
     }
 
     return count;
@@ -44,14 +24,24 @@ test "part 1 example" {
     const reader = stream.reader();
 
     const answer = try part1(std.testing.allocator, reader);
-    try std.testing.expectEqual(answer, 2);
+    try std.testing.expectEqual(2, answer);
 }
 
 pub fn part2(allocator: mem.Allocator, file_reader: anytype) !u64 {
     const input = try Input().parse(allocator, file_reader);
     defer input.deinit();
 
-    return 0;
+    var count: u64 = 0;
+
+    for (input.reports) |report| {
+        if (is_safe(report)) {
+            count += 1;
+        } else if (try is_safe_with_dampening(report, allocator)) {
+            count += 1;
+        }
+    }
+
+    return count;
 }
 
 test "part 2 example" {
@@ -59,7 +49,7 @@ test "part 2 example" {
     const reader = stream.reader();
 
     const answer = try part2(std.testing.allocator, reader);
-    try std.testing.expectEqual(answer, undefined);
+    try std.testing.expectEqual(4, answer);
 }
 
 const example =
@@ -111,4 +101,49 @@ fn Input() type {
             };
         }
     };
+}
+
+fn is_safe(report: []i32) bool {
+    var sign: i32 = undefined;
+
+    for (report, 0..) |level, index| {
+        if (index == 0) continue;
+
+        const previous_level = report[index - 1];
+        const step = previous_level - level;
+        const difference = @abs(step);
+
+        if (difference < 1 or difference > 3) {
+            return false;
+        }
+
+        if (index == 1) {
+            sign = std.math.sign(step);
+        } else {
+            if (sign != std.math.sign(step)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+fn is_safe_with_dampening(report: []i32, allocator: std.mem.Allocator) !bool {
+    const slice_without_bad_index: []i32 = try allocator.alloc(i32, report.len - 1);
+    defer allocator.free(slice_without_bad_index);
+
+    for (0..report.len) |bad_index| {
+        for (report, 0..) |level, index| {
+            if (index == bad_index) continue;
+            if (index < bad_index) slice_without_bad_index[index] = level;
+            if (index > bad_index) slice_without_bad_index[index - 1] = level;
+        }
+
+        if (is_safe(slice_without_bad_index)) {
+            return true;
+        }
+    }
+
+    return false;
 }
