@@ -49,4 +49,10 @@ pub fn main() !void {
         const answer = try day3.part1(file.reader().any());
         std.debug.print("day 3 part 1: {d}\n", .{answer});
     }
+    {
+        const file = try std.fs.cwd().openFile("data/day3.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day3.part2(file.reader().any());
+        std.debug.print("day 3 part 2: {d}\n", .{answer});
+    }
 }
