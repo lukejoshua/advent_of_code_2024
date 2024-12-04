@@ -5,6 +5,7 @@ const mem = std.mem;
 const day1 = @import("./day1.zig");
 const day2 = @import("./day2.zig");
 const day3 = @import("./day3.zig");
+const day4 = @import("./day4.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
@@ -49,10 +50,17 @@ pub fn main() !void {
         const answer = try day3.part1(file.reader().any());
         std.debug.print("day 3 part 1: {d}\n", .{answer});
     }
+
     {
         const file = try std.fs.cwd().openFile("data/day3.txt", .{ .mode = .read_only });
         defer file.close();
         const answer = try day3.part2(file.reader().any());
         std.debug.print("day 3 part 2: {d}\n", .{answer});
+    }
+    {
+        const file = try std.fs.cwd().openFile("data/day4.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day4.part1(allocator, file.reader().any());
+        std.debug.print("day 4 part 1: {d}\n", .{answer});
     }
 }
