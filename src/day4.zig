@@ -57,6 +57,51 @@ pub fn part1(allocator: mem.Allocator, file_reader: std.io.AnyReader) !i32 {
     return count;
 }
 
+test "part 1 example" {
+    var stream = std.io.fixedBufferStream(example);
+    const reader = stream.reader().any();
+    const answer = try part1(std.testing.allocator, reader);
+    try std.testing.expectEqual(18, answer);
+}
+
+pub fn part2(allocator: mem.Allocator, file_reader: std.io.AnyReader) !i32 {
+    const input = try Input.parse(allocator, file_reader);
+    defer input.deinit();
+
+    var count: i32 = 0;
+
+    for (input.grid, 0..) |_, row| {
+        std.debug.print("{} {s}\n", .{ row, input.grid[row] });
+        column_loop: for (input.grid[row], 0..) |_, column| {
+            const position = Position{ .row = @intCast(row), .column = @intCast(column) };
+
+            const char = input.at(position).?;
+
+            if (char != 'A') {
+                continue;
+            }
+
+            const top_left = input.at(position.plus(.up_left, 1)) orelse continue;
+            const top_right = input.at(position.plus(.up_right, 1)) orelse continue;
+            const bottom_left = input.at(position.plus(.down_left, 1)) orelse continue;
+            const bottom_right = input.at(position.plus(.down_right, 1)) orelse continue;
+
+            for ([_]u8{ top_left, top_right, bottom_left, bottom_right }) |corner| {
+                if (corner != 'S' and corner != 'M') continue :column_loop;
+            }
+
+            if (top_left == bottom_right or top_right == bottom_left) {
+                continue :column_loop;
+            }
+
+            std.debug.print("!! {}\n", .{position});
+            count += 1;
+        }
+    }
+
+    return count;
+}
+
 const Direction = enum {
     const Self = @This();
 
@@ -134,6 +179,13 @@ const Position = struct {
     }
 };
 
+test "part 2 example" {
+    var stream = std.io.fixedBufferStream(example);
+    const reader = stream.reader().any();
+    const answer = try part2(std.testing.allocator, reader);
+    try std.testing.expectEqual(9, answer);
+}
+
 const example =
     \\MMMSXXMASM
     \\MSAMXMSMSA
@@ -146,27 +198,6 @@ const example =
     \\MAMMMXMMMM
     \\MXMXAXMASX
 ;
-
-test "part 1 example" {
-    var stream = std.io.fixedBufferStream(example);
-    const reader = stream.reader().any();
-    const answer = try part1(std.testing.allocator, reader);
-    try std.testing.expectEqual(18, answer);
-}
-
-pub fn part2(allocator: mem.Allocator, file_reader: anytype) !u64 {
-    const input = try Input().parse(allocator, file_reader);
-    defer input.deinit();
-
-    return 0;
-}
-
-test "part 2 example" {
-    // var stream = std.io.fixedBufferStream(example);
-    // const reader = stream.reader();
-    // const answer = try part2(std.testing.allocator, reader);
-    try std.testing.expectEqual(undefined, undefined);
-}
 
 const Grid = [][]const u8;
 
