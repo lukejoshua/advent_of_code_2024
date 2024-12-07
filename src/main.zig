@@ -6,6 +6,7 @@ const day1 = @import("./day1.zig");
 const day2 = @import("./day2.zig");
 const day3 = @import("./day3.zig");
 const day4 = @import("./day4.zig");
+const day5 = @import("./day5.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
@@ -62,5 +63,18 @@ pub fn main() !void {
         defer file.close();
         const answer = try day4.part1(allocator, file.reader().any());
         std.debug.print("day 4 part 1: {d}\n", .{answer});
+    }
+    {
+        const file = try std.fs.cwd().openFile("data/day5.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day5.part1(allocator, file.reader().any());
+        std.debug.print("day 5 part 1: {d}\n", .{answer});
+    }
+
+    {
+        const file = try std.fs.cwd().openFile("data/day5.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day5.part2(allocator, file.reader().any());
+        std.debug.print("day 5 part 2: {d}\n", .{answer});
     }
 }
