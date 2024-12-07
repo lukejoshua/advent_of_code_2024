@@ -103,4 +103,10 @@ pub fn main() !void {
         const answer = try day7.part1(allocator, file.reader().any());
         std.debug.print("day 7 part 1: {d}\n", .{answer});
     }
+    {
+        const file = try std.fs.cwd().openFile("data/day7.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day7.part2(allocator, file.reader().any());
+        std.debug.print("day 7 part 2: {d}\n", .{answer});
+    }
 }

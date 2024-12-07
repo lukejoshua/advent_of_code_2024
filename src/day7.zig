@@ -22,7 +22,7 @@ pub fn part1(allocator: mem.Allocator, file_reader: anytype) !u64 {
         const equation = Equation{ .lhs = lhs, .operands = try operands.toOwnedSlice(), .acc = first_operand };
         defer allocator.free(equation.operands);
 
-        if (equation.is_solvable()) {
+        if (equation.is_solvable(false)) {
             sum += equation.lhs;
         }
     }
@@ -39,17 +39,37 @@ test "part 1 example" {
 }
 
 pub fn part2(allocator: mem.Allocator, file_reader: anytype) !u64 {
-    _ = allocator;
-    _ = file_reader;
-    return 0;
+    var sum: u64 = 0;
+
+    while (try next_line_alloc(file_reader, allocator)) |line| {
+        defer allocator.free(line);
+        var numbers = std.mem.tokenizeAny(u8, line, " :");
+        const lhs = try std.fmt.parseUnsigned(u64, numbers.next().?, 10);
+        const first_operand = try std.fmt.parseUnsigned(u64, numbers.next().?, 10);
+
+        var operands = std.ArrayList(u64).init(allocator);
+
+        while (numbers.next()) |number| {
+            try operands.append(try std.fmt.parseUnsigned(u64, number, 10));
+        }
+
+        const equation = Equation{ .lhs = lhs, .operands = try operands.toOwnedSlice(), .acc = first_operand };
+        defer allocator.free(equation.operands);
+
+        if (equation.is_solvable(true)) {
+            sum += equation.lhs;
+        }
+    }
+
+    return sum;
 }
 
 test "part 2 example" {
     var stream = std.io.fixedBufferStream(example);
-    const reader = stream.reader();
+    const reader = stream.reader().any();
 
     const answer = try part2(std.testing.allocator, reader);
-    try std.testing.expectEqual(undefined, answer);
+    try std.testing.expectEqual(11387, answer);
 }
 
 const example =
@@ -71,14 +91,34 @@ const Equation = struct {
     acc: u64,
     operands: []u64,
 
-    fn is_solvable(self: Self) bool {
+    fn is_solvable(self: Self, support_concat: bool) bool {
         if (self.operands.len == 0) {
             return self.acc == self.lhs;
         }
 
-        var mul = Equation{ .lhs = self.lhs, .acc = self.acc * self.operands[0], .operands = self.operands[1..] };
-        var add = Equation{ .lhs = self.lhs, .acc = self.acc + self.operands[0], .operands = self.operands[1..] };
+        if (support_concat) {
+            var mul = Equation{ .lhs = self.lhs, .acc = self.acc * self.operands[0], .operands = self.operands[1..] };
+            var add = Equation{ .lhs = self.lhs, .acc = self.acc + self.operands[0], .operands = self.operands[1..] };
 
-        return mul.is_solvable() or add.is_solvable();
+            const shift = std.math.powi(u64, 10, std.math.log10_int(self.operands[0]) + 1) catch {
+                std.debug.print("Underflow or overflow", .{});
+                return false;
+            };
+
+            var concat =
+                Equation{
+                .lhs = self.lhs,
+                // shift in base 10
+                .acc = self.acc * shift + self.operands[0],
+                .operands = self.operands[1..],
+            };
+
+            return mul.is_solvable(true) or add.is_solvable(true) or concat.is_solvable(true);
+        } else {
+            var mul = Equation{ .lhs = self.lhs, .acc = self.acc * self.operands[0], .operands = self.operands[1..] };
+            var add = Equation{ .lhs = self.lhs, .acc = self.acc + self.operands[0], .operands = self.operands[1..] };
+
+            return mul.is_solvable(false) or add.is_solvable(false);
+        }
     }
 };
