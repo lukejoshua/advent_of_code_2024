@@ -8,6 +8,7 @@ const day3 = @import("./day3.zig");
 const day4 = @import("./day4.zig");
 const day5 = @import("./day5.zig");
 const day6 = @import("./day6.zig");
+const day6part2 = @import("./day6part2.zig");
 const day7 = @import("./day7.zig");
 
 pub fn main() !void {
@@ -96,6 +97,12 @@ pub fn main() !void {
         defer file.close();
         const answer = try day6.part1(allocator, file.reader().any());
         std.debug.print("day 6 part 1: {d}\n", .{answer});
+    }
+    {
+        const file = try std.fs.cwd().openFile("data/day6.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day6part2.part2(allocator, file.reader().any());
+        std.debug.print("day 6 part 2: {d}\n", .{answer});
     }
     {
         const file = try std.fs.cwd().openFile("data/day7.txt", .{ .mode = .read_only });
