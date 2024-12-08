@@ -10,22 +10,6 @@ pub fn part1(allocator: mem.Allocator, file_reader: std.io.AnyReader) !u64 {
 
     while (try input.step()) {}
 
-    for (0..@intCast(input.row_count)) |r| {
-        for (0..@intCast(input.column_count)) |c| {
-            const pos: Position = .{ @intCast(r), @intCast(c) };
-            if (s[0] == pos[0] and s[1] == pos[1]) {
-                std.debug.print("^", .{});
-            } else if (input.visited.contains(pos)) {
-                std.debug.print("X", .{});
-            } else if (input.obstacles.contains(pos)) {
-                std.debug.print("#", .{});
-            } else {
-                std.debug.print(".", .{});
-            }
-        }
-        std.debug.print("\n", .{});
-    }
-
     return input.visited.count();
 }
 

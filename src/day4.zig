@@ -11,7 +11,6 @@ pub fn part1(allocator: mem.Allocator, file_reader: std.io.AnyReader) !i32 {
     var count: i32 = 0;
 
     for (input.grid, 0..) |_, row| {
-        std.debug.print("{} {s}\n", .{ row, input.grid[row] });
         for (input.grid[row], 0..) |_, column| {
             const position = Position{ .row = @intCast(row), .column = @intCast(column) };
 
@@ -48,7 +47,6 @@ pub fn part1(allocator: mem.Allocator, file_reader: std.io.AnyReader) !i32 {
                     }
                 }
 
-                std.debug.print("!! {} {} ({c})\n", .{ position, direction, char });
                 count += 1;
             }
         }
@@ -71,7 +69,6 @@ pub fn part2(allocator: mem.Allocator, file_reader: std.io.AnyReader) !i32 {
     var count: i32 = 0;
 
     for (input.grid, 0..) |_, row| {
-        std.debug.print("{} {s}\n", .{ row, input.grid[row] });
         column_loop: for (input.grid[row], 0..) |_, column| {
             const position = Position{ .row = @intCast(row), .column = @intCast(column) };
 
@@ -94,7 +91,6 @@ pub fn part2(allocator: mem.Allocator, file_reader: std.io.AnyReader) !i32 {
                 continue :column_loop;
             }
 
-            std.debug.print("!! {}\n", .{position});
             count += 1;
         }
     }
@@ -113,29 +109,6 @@ const Direction = enum {
     down_left,
     up_right,
     down_right,
-
-    pub fn format(
-        self: Self,
-        comptime fmt: []const u8,
-        options: std.fmt.FormatOptions,
-        writer: std.io.AnyWriter,
-    ) !void {
-        _ = fmt;
-        _ = options;
-
-        const symbol = switch (self) {
-            .up => "↑",
-            .down => "↓",
-            .left => "←",
-            .right => "→",
-            .up_left => "↖",
-            .down_left => "↙",
-            .up_right => "↗",
-            .down_right => "↘",
-        };
-
-        try writer.writeAll(symbol);
-    }
 
     fn column_offset(self: Self) i32 {
         return switch (self) {
@@ -159,17 +132,6 @@ const Position = struct {
 
     row: i32,
     column: i32,
-
-    pub fn format(
-        self: Position,
-        comptime fmt: []const u8,
-        options: std.fmt.FormatOptions,
-        writer: std.io.AnyWriter,
-    ) !void {
-        _ = fmt;
-        _ = options;
-        try writer.print("({},{})", .{ self.row, self.column });
-    }
 
     fn plus(self: Self, direction: Direction, times: i32) Position {
         const new_row = self.row + times * direction.row_offset();

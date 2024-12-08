@@ -10,17 +10,14 @@ pub fn part1(allocator: mem.Allocator, file_reader: std.io.AnyReader) !u64 {
 
     var total: u64 = 0;
     outer: for (input.updates) |update| {
-        std.debug.print("update: {any}\n", .{update});
         for (update, 0..) |page, index| {
             for (update[index + 1 ..]) |later_page| {
                 if (!input.is_allowed(page, later_page)) {
-                    std.debug.print("{}->{} is not allowed\n", .{ page, later_page });
                     continue :outer;
                 }
             }
         }
         const score = update[(update.len / 2)];
-        std.debug.print("Success: Add {} to the total\n", .{score});
         total += score;
     }
 
@@ -40,7 +37,6 @@ pub fn part2(allocator: mem.Allocator, file_reader: std.io.AnyReader) !u64 {
 
     var total: u64 = 0;
     for (input.updates) |update| {
-        std.debug.print("update: {any}\n", .{update});
         const is_ordered = blk: {
             for (update, 0..) |page, index| {
                 for (update[index + 1 ..]) |later_page| {
@@ -63,7 +59,6 @@ pub fn part2(allocator: mem.Allocator, file_reader: std.io.AnyReader) !u64 {
         }.f);
 
         const score = update[(update.len / 2)];
-        std.debug.print("Success: Add {} to the total\n", .{score});
         total += score;
     }
 

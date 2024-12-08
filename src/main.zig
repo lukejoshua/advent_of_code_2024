@@ -10,6 +10,7 @@ const day5 = @import("./day5.zig");
 const day6 = @import("./day6.zig");
 const day6part2 = @import("./day6part2.zig");
 const day7 = @import("./day7.zig");
+const day8 = @import("./day8.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
@@ -22,6 +23,7 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
+    // TODO: Run in parallel?
     {
         const file = try std.fs.cwd().openFile("data/day1.txt", .{ .mode = .read_only });
         defer file.close();
@@ -115,5 +117,19 @@ pub fn main() !void {
         defer file.close();
         const answer = try day7.part2(allocator, file.reader().any());
         std.debug.print("day 7 part 2: {d}\n", .{answer});
+    }
+
+    {
+        const file = try std.fs.cwd().openFile("data/day8.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day8.part1(allocator, file.reader().any());
+        std.debug.print("day 8 part 1: {d}\n", .{answer});
+    }
+
+    {
+        const file = try std.fs.cwd().openFile("data/day8.txt", .{ .mode = .read_only });
+        defer file.close();
+        const answer = try day8.part2(allocator, file.reader().any());
+        std.debug.print("day 8 part 2: {d}\n", .{answer});
     }
 }
