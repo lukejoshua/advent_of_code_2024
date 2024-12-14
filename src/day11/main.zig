@@ -3,7 +3,6 @@ const ascii = std.ascii;
 const assert = std.debug.assert;
 const testing = std.testing;
 const Allocator = std.mem.Allocator;
-const problem = @import("problem.zig");
 
 const DEBUG = false;
 

@@ -14,6 +14,7 @@ pub fn main() !void {
 
     const part1Answer = try part1(gpa.allocator(), file);
     std.debug.print("day 11 part 1: {}\n\n", .{part1Answer});
+    assert(part1Answer == 1424006);
 
     const part2Answer = try part2(gpa.allocator(), file);
     std.debug.print("day 11 part 2: {}\n\n", .{part2Answer});
