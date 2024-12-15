@@ -1,3 +1,4 @@
 .zig-cache
 zig-out
 main
+neotest_build.zig
