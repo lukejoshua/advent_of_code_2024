@@ -101,7 +101,7 @@ pub fn part1(allocator: Allocator, file: []const u8) !u64 {
     }
     try print(grid);
 
-    assert(total == 1465152);
+    if (!is_test) assert(total == 1465152);
     return total;
 }
 
