@@ -7,7 +7,7 @@ const Allocator = mem.Allocator;
 const is_test = @import("builtin").is_test;
 
 pub const input = @embedFile("input.txt");
-const DEBUG = false;
+const DEBUG = true;
 
 const log = std.log.scoped(.day16);
 
@@ -59,6 +59,24 @@ const State = struct {
         return result;
     }
 
+    fn prev(self: Self, cost: u32) [3]?StateWithCost {
+        var result = [_]?StateWithCost{null} ** 3;
+
+        const directions = self.direction.rotations();
+
+        // ew
+        if (cost >= 1000) {
+            result[0] = StateWithCost{ .state = self.rotate(directions[0]), .cost = cost - 1000 };
+            result[1] = StateWithCost{ .state = self.rotate(directions[1]), .cost = cost - 1000 };
+        }
+
+        if (cost > 0) {
+            result[2] = StateWithCost{ .state = self.backward(), .cost = cost - 1 };
+        }
+
+        return result;
+    }
+
     fn rotate(self: Self, direction: Direction) Self {
         return Self{ .row = self.row, .column = self.column, .direction = direction };
     }
@@ -69,6 +87,15 @@ const State = struct {
             .down => Self{ .row = self.row + 1, .column = self.column, .direction = self.direction },
             .left => Self{ .row = self.row, .column = self.column - 1, .direction = self.direction },
             .right => Self{ .row = self.row, .column = self.column + 1, .direction = self.direction },
+        };
+    }
+
+    fn backward(self: Self) Self {
+        return switch (self.direction) {
+            .down => Self{ .row = self.row - 1, .column = self.column, .direction = self.direction },
+            .up => Self{ .row = self.row + 1, .column = self.column, .direction = self.direction },
+            .right => Self{ .row = self.row, .column = self.column - 1, .direction = self.direction },
+            .left => Self{ .row = self.row, .column = self.column + 1, .direction = self.direction },
         };
     }
 };
@@ -177,7 +204,7 @@ pub fn part1(allocator: Allocator, comptime file: []const u8) !u64 {
         allocator.free(grid);
     }
 
-    try print(grid);
+    try print(grid, null);
 
     const known_costs = try StateSet.init(allocator);
     defer known_costs.deinit();
@@ -195,6 +222,7 @@ pub fn part1(allocator: Allocator, comptime file: []const u8) !u64 {
         // std.debug.print("current: ({}, {}) {s} @{}\n", .{ cheapest_state.row, cheapest_state.column, @tagName(cheapest_state.direction), cost });
 
         if (cheapest_state.column == end.column and cheapest_state.row == end.row) {
+            if (!is_test) assert(cost == 115500);
             return cost;
         }
 
@@ -255,7 +283,7 @@ pub fn part2(allocator: Allocator, file: []const u8) !u64 {
         allocator.free(grid);
     }
 
-    try print(grid);
+    try print(grid, null);
 
     const known_costs = try StateSet.init(allocator);
     defer known_costs.deinit();
@@ -292,7 +320,63 @@ pub fn part2(allocator: Allocator, file: []const u8) !u64 {
         }
     }
 
-    return 0;
+    var benches = std.AutoHashMap(Position, void).init(allocator);
+
+    const directions = [_]Direction{ .up, .down, .left, .right };
+
+    const lowest_cost = max: {
+        var cost: u32 = math.maxInt(u32);
+        for (directions) |direction| {
+            const end_state = State{ .row = end.row, .column = end.column, .direction = direction };
+            const this_cost = known_costs.get(end_state) orelse continue;
+            cost = @min(this_cost, cost);
+        }
+        break :max cost;
+    };
+
+    for (directions) |direction| {
+        // BUG: I can't assume that there's only one end state yet.
+        // I should compute the end states first to verify that they all share the same cost
+        const end_state = State{ .row = end.row, .column = end.column, .direction = direction };
+        const cost = known_costs.get(end_state) orelse continue;
+        if (cost != lowest_cost) continue;
+        try traverse(&benches, known_costs, end_state, cost);
+    }
+
+    try print(grid, benches);
+    return benches.count();
+}
+
+// starting from the known states for the end node
+// add the state's position to the set
+// get the known cost of the state
+// calculate how much the neighbouring states needed to have been to meet that cost
+// if they match, recursively check them.
+// i.e. If the end state has a cost of 1003, and a direction of up
+// if the state achived by "un-up" has a score of 1002, it's included
+// if the state achieved by "rotate 90" has a score of 3, it is also considered
+fn traverse(benches: *std.AutoHashMap(Position, void), costs: StateSet, state: State, expected_cost: u32) !void {
+    const actual_cost = costs.get(state) orelse return;
+    if (actual_cost != expected_cost) return;
+
+    const position = Position{
+        .row = state.row,
+        .column = state.column,
+    };
+    try benches.put(position, undefined);
+
+    const predecessor_candidates = state.prev(actual_cost);
+    for (predecessor_candidates) |maybe_candidate| {
+        const candidate = maybe_candidate orelse continue;
+
+        const actual_cost_for_candidate = costs.get(candidate.state) orelse continue;
+        if (candidate.cost != actual_cost_for_candidate) {
+            // candidate wasn't reached via an optimal path
+            continue;
+        }
+
+        try traverse(benches, costs, candidate.state, actual_cost_for_candidate);
+    }
 }
 
 test "part 1 small example" {
@@ -312,13 +396,14 @@ test "part 2 large example" {
 }
 
 // This is super ineffecient, but logging is borked
-fn print(map: Map) !void {
+fn print(map: Map, benches: ?std.AutoHashMap(Position, void)) !void {
     if (!DEBUG) return;
-    for (map) |row| {
-        for (row) |cell| {
+    for (map, 0..) |row, r| {
+        for (row, 0..) |cell, c| {
+            const is_bench = benches != null and benches.?.contains(Position{ .row = @intCast(r), .column = @intCast(c) });
             const char: u8 = switch (cell) {
-                .empty => '.',
-                .wall => '#',
+                .empty => if (is_bench) 'O' else '.',
+                .wall => if (is_bench) unreachable else '#',
             };
             std.debug.print("{c}", .{char});
         }
