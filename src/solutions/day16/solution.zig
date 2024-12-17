@@ -7,7 +7,7 @@ const Allocator = mem.Allocator;
 const is_test = @import("builtin").is_test;
 
 pub const input = @embedFile("input.txt");
-const DEBUG = true;
+const DEBUG = false;
 
 const log = std.log.scoped(.day16);
 
@@ -321,6 +321,7 @@ pub fn part2(allocator: Allocator, file: []const u8) !u64 {
     }
 
     var benches = std.AutoHashMap(Position, void).init(allocator);
+    defer benches.deinit();
 
     const directions = [_]Direction{ .up, .down, .left, .right };
 
